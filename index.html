@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chatbot</title>
+<style>
+  body { font-family: Arial; background: #f0f0f0; margin: 20px; }
+  #chat { background: #fff; padding: 10px; border-radius: 5px; max-height: 400px; overflow-y: auto; margin-bottom: 10px; }
+  .bubble { padding: 8px 12px; border-radius: 20px; margin: 5px 0; max-width: 70%; }
+  .user { background: #d1e7dd; text-align: right; }
+  .bot { background: #e2e3e5; text-align: left; }
+  #input-container { display: flex; gap: 10px; }
+  #message { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
+  #send { padding: 10px 15px; border: none; border-radius: 5px; background: #007bff; color: white; cursor: pointer; }
+  #questions { margin-top: 10px; }
+  .question-tab { display: inline-block; margin: 4px; padding: 6px 10px; background: #fff; border-radius: 15px; border: 1px solid #ccc; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="chat"></div>
+<div id="input-container">
+  <input id="message" placeholder="Type here...">
+  <button id="send">Send</button>
+</div>
+<div id="questions"></div>
+
+<script>
+let faqs = {};
+
+// Load FAQs
+fetch('faqs.json')
+  .then(res => res.json())
+  .then(data => {
+    faqs = data;
+    showTabs();
+  });
+
+function clean(text) {
+  return text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
+}
+
+function addMsg(text, sender) {
+  const div = document.createElement('div');
+  div.className = 'bubble ' + sender;
+  div.textContent = text;
+  document.getElementById('chat').appendChild(div);
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+
+function send() {
+  const raw = document.getElementById('message').value.trim();
+  if (!raw) return;
+  addMsg(raw, 'user');
+
+  const cleaned = clean(raw);
+  let response = faqs[cleaned] || "🤖 Sorry, I don’t know that yet!";
+  addMsg(response, 'bot');
+
+  document.getElementById('message').value = '';
+}
+
+function showTabs() {
+  const div = document.getElementById('questions');
+  Object.keys(faqs).forEach(q => {
+    const tab = document.createElement('div');
+    tab.className = 'question-tab';
+    tab.textContent = q;
+    tab.onclick = () => {
+      document.getElementById('message').value = q;
+      send();
+    };
+    div.appendChild(tab);
+  });
+}
+
+document.getElementById('send').onclick = send;
+document.getElementById('message').addEventListener('keypress', e => {
+  if (e.key === 'Enter') send();
+});
+</script>
+
+</body>
+</html>
